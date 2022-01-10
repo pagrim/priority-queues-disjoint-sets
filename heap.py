@@ -23,8 +23,8 @@ class MinHeap:
             logging.debug('Checking node %d', i)
             lc = self.left_child(i)
             rc = self.right_child(i)
-            logging.debug('Left child is index is %s', lc)
-            logging.debug('Right child is index %s', rc)
+            logging.debug('Left child index is %s', lc)
+            logging.debug('Right child index is %s', rc)
             if lc is not None and self.heap[i] >= self.heap[lc]:
                 return False
             if rc is not None and self.heap[i] >= self.heap[rc]:
@@ -58,6 +58,9 @@ class MinHeap:
             rc = right_child_pos
         return rc
 
+    @staticmethod
+    def parent(target_index):
+        return math.floor((target_index-1)/float(2))
 
     def sift_down(self, target_index):
         min_index = target_index
@@ -70,7 +73,23 @@ class MinHeap:
         if target_index != min_index:
             logging.info("Swapping position %s with %s; %s -> %s", min_index, target_index, self.heap[min_index], self.heap[target_index])
             self.swaps.append((self.heap[min_index], self.heap[target_index]))
-            min_index_val = self.heap[min_index]
-            self.heap[min_index] = self.heap[target_index]
-            self.heap[target_index] = min_index_val
+            self.swap(target_index, min_index)
             self.sift_down(min_index)
+
+    def insert(self, item):
+        self.heap.append(item)
+        added_index = len(self.heap) -1
+        self.sift_up(added_index)
+        logging.debug('New heap %s', self.heap)
+
+    def sift_up(self, target_index):
+        while target_index > 0 and self.heap[self.parent(target_index)] > self.heap[target_index]:
+            parent_index = self.parent(target_index)
+            logging.debug('Swapping values %s and %s', self.heap[parent_index], self.heap[target_index])
+            self.swap(target_index, parent_index)
+            target_index = parent_index
+
+    def swap(self, index1, index2):
+        idx1_val = self.heap[index1]
+        self.heap[index1] = self.heap[index2]
+        self.heap[index2] = idx1_val

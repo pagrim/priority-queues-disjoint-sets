@@ -21,3 +21,14 @@ def test_build_heap(heap_data, exp_swaps):
     mh = MinHeap(data=heap_data)
     mh.build_heap()
     assert mh.swaps == exp_swaps
+
+@pytest.mark.parametrize(("heap_data"),
+[
+([3, 4, 5])
+])
+def test_insert(heap_data):
+    mh = MinHeap(data=heap_data)
+    assert mh.is_heap()
+    mh.insert(2)
+    mh.insert(1)
+    assert mh.is_heap()
