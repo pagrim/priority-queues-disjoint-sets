@@ -3,9 +3,9 @@ import pytest
 from parallel_processor import ParallelProcessor, ThreadJob
 
 def test_less_than():
-    tj1 = ThreadJob(0, 1)
-    tj2 = ThreadJob(0, 2)
-    tj3 = ThreadJob(1, 1)
+    tj1 = ThreadJob(*(0, None, 1))
+    tj2 = ThreadJob(*(0, None, 2))
+    tj3 = ThreadJob(*(1, None, 1))
     assert tj1 < tj2 and tj1 < tj3 and tj3 < tj2
 
 
