@@ -1,7 +1,40 @@
-from disjoint_set_tree import DisjointSetTree
-
 import logging
-logging.basicConfig(level=logging.DEBUG)
+import re
+import sys
+
+logging.basicConfig()
+
+
+class DisjointSetTree:
+
+    def __init__(self, num_objects):
+        self.parent = []
+        self.rank = []
+        self.make_set_all(num_objects)
+
+    def make_set_all(self, num_objects):
+        self.parent = [i for i in range(num_objects)]
+        self.rank = [0 for _ in range(num_objects)]
+
+    def make_set(self, index):
+        self.parent[index] = index
+        self.rank[index] = 0
+
+    def find(self, index):
+        while index != self.parent[index]:
+            index = self.parent[index]
+        return index
+
+    def union(self, index_i, index_j):
+        if index_i == index_j:
+            return
+        if self.rank[index_i] > self.rank[index_j]:
+            self.parent[index_j] = index_i
+        else:
+            self.parent[index_i] = index_j
+            if self.rank[index_i] == self.rank[index_j]:
+                self.rank[index_j] += 1
+
 
 class TableMerge:
 
@@ -37,3 +70,18 @@ class TableMerge:
             logging.debug('Row counts %s', self.row_counts)
             max_rows.append(max(self.row_counts))
         return max_rows
+
+
+if __name__ == '__main__':
+    match_object = re.match(r'(\d+)\s(\d+)', sys.stdin.readline().rstrip())
+    num_tables, num_merges = int(match_object.group(1)), int(match_object.group(2))
+    row_counts = [int(jb) for jb in sys.stdin.readline().rstrip().split(" ")]
+
+    tm = TableMerge(row_counts=row_counts)
+    input_lines = [sys.stdin.readline().rstrip() for _ in range(num_merges)]
+
+    for line in input_lines:
+        merge_op = tuple(map(lambda x: int(x), line.split(" ")))
+        tm.merge(*merge_op)
+        print(max(tm.row_counts))
+
