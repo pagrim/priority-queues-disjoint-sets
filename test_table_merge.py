@@ -18,14 +18,22 @@ def test_merge_fetch_max(table_rows, merge_operations, exp_max_rows):
 @pytest.mark.parametrize(('num_objects', 'union_ops', 'find_index', 'exp_res'), [
     (5, [], 2, 2),
     (5, [(4, 2)], 4, 2),
-    (5, [(4, 2), (4, 3)], 3, 2),
+    (5, [(4, 2), (4, 3)], 3, 2)
 ]
                          )
-def test_find(num_objects, union_ops, find_index, exp_res):
+def test_find_set(num_objects, union_ops, find_index, exp_res):
     dst = DisjointSetTree(num_objects=num_objects)
     for uo in union_ops:
         dst.union(*uo)
-    assert dst.find(find_index) == exp_res
+    assert dst.find_set(find_index) == exp_res
 
 
-
+@pytest.mark.parametrize(('num_objects', 'union_ops', 'exp_height'), [
+    (8, [(1, 0), (3, 2), (3, 1), (5, 4), (7, 6), (7, 5), (7, 3)], [2, 0, 0, 0, 1, 0, 0, 0])
+])
+def test_path_compression(num_objects, union_ops, exp_height):
+    dst = DisjointSetTree(num_objects=num_objects)
+    for uo in union_ops:
+        dst.union(*uo)
+    comparison = [rnk >= hgt for rnk, hgt in zip(dst.rank, exp_height)]
+    assert all(comparison)

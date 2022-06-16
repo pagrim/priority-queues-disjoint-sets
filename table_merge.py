@@ -31,7 +31,7 @@ class DisjointSetTree:
         return root_index
 
     def union(self, index_i, index_j):
-        root_i, root_j = self.find(index_i), self.find(index_j)
+        root_i, root_j = self.find_set(index_i), self.find_set(index_j)
         logging.debug('Found root of %d is %d and root of %d is %d', index_i, root_i, index_j, root_j)
         if root_i == root_j:
             return root_i, root_j
