@@ -34,7 +34,7 @@ class DisjointSetTree:
         root_i, root_j = self.find(index_i), self.find(index_j)
         logging.debug('Found root of %d is %d and root of %d is %d', index_i, root_i, index_j, root_j)
         if root_i == root_j:
-            return
+            return root_i, root_j
         if self.rank[root_i] > self.rank[root_j]:
             self.parent[root_j] = root_i
         else:
@@ -52,7 +52,7 @@ class TableMerge:
         self.row_counts = row_counts
         self.set_tree = DisjointSetTree(len(row_counts))
 
-    def merge(self, source, destination):
+    def merge(self, destination, source):
         src_idx, dest_idx = source - 1, destination - 1
         logging.debug('Candidate merge; destination table index %d source table index %d', dest_idx, src_idx)
         dest_rows_idx, src_rows_idx = self.set_tree.union(src_idx, dest_idx)
@@ -64,8 +64,9 @@ class TableMerge:
             self.update_row_counts(dest_rows_idx, src_rows_idx)
 
     def update_row_counts(self, root_index, other_index):
-        self.row_counts[root_index] += self.row_counts[other_index]
-        self.row_counts[other_index] = 0
+        if root_index != other_index:
+            self.row_counts[root_index] += self.row_counts[other_index]
+            self.row_counts[other_index] = 0
 
     def merge_fetch_max(self, merge_ops):
         max_rows = []
