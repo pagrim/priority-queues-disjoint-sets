@@ -25,15 +25,25 @@ class DisjointSetTree:
             index = self.parent[index]
         return index
 
+    def find_set(self, index):
+        root_index = self.find(index)
+        self.parent[index] = root_index
+        return root_index
+
     def union(self, index_i, index_j):
-        if index_i == index_j:
+        root_i, root_j = self.find(index_i), self.find(index_j)
+        logging.debug('Found root of %d is %d and root of %d is %d', index_i, root_i, index_j, root_j)
+        if root_i == root_j:
             return
-        if self.rank[index_i] > self.rank[index_j]:
-            self.parent[index_j] = index_i
+        if self.rank[root_i] > self.rank[root_j]:
+            self.parent[root_j] = root_i
         else:
-            self.parent[index_i] = index_j
-            if self.rank[index_i] == self.rank[index_j]:
-                self.rank[index_j] += 1
+            self.parent[root_i] = root_j
+            if self.rank[root_i] == self.rank[root_j]:
+                self.rank[root_j] += 1
+        logging.debug('Parents after union %s', self.parent)
+        logging.debug('Ranks after union %s', self.rank)
+        return root_i, root_j
 
 
 class TableMerge:
@@ -42,22 +52,16 @@ class TableMerge:
         self.row_counts = row_counts
         self.set_tree = DisjointSetTree(len(row_counts))
 
-    def merge(self, destination, source):
-        dest_idx, src_idx = destination - 1, source - 1
-        logging.debug('Candidate merge; destination table %d source table %d', destination, source)
-        dest_rows_idx = self.set_tree.find(dest_idx)
-        src_rows_idx = self.set_tree.find(src_idx)
-        logging.debug('Calculated data rows indices; destination %d source %d', dest_rows_idx, src_rows_idx)
-        if dest_rows_idx != src_rows_idx:
-            logging.debug('Merging %d with %d', destination, source)
-            self.set_tree.union(src_rows_idx, dest_rows_idx)
-            logging.debug('Parents %s', self.set_tree.parent)
-            logging.debug('Ranks %s', self.set_tree.rank)
-            merged_root_idx = self.set_tree.find(src_rows_idx)
-            if merged_root_idx == src_rows_idx:
-                self.update_row_counts(src_rows_idx, dest_rows_idx)
-            else:
-                self.update_row_counts(dest_rows_idx, src_rows_idx)
+    def merge(self, source, destination):
+        src_idx, dest_idx = source - 1, destination - 1
+        logging.debug('Candidate merge; destination table index %d source table index %d', dest_idx, src_idx)
+        dest_rows_idx, src_rows_idx = self.set_tree.union(src_idx, dest_idx)
+        merged_root_idx = self.set_tree.find(src_rows_idx)
+        logging.debug('Merged root index %d', merged_root_idx)
+        if merged_root_idx == src_rows_idx:
+            self.update_row_counts(src_rows_idx, dest_rows_idx)
+        else:
+            self.update_row_counts(dest_rows_idx, src_rows_idx)
 
     def update_row_counts(self, root_index, other_index):
         self.row_counts[root_index] += self.row_counts[other_index]
