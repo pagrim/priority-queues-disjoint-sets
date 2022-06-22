@@ -34,16 +34,18 @@ class DisjointSetTree:
         root_i, root_j = self.find_set(index_i), self.find_set(index_j)
         logging.debug('Found root of %d is %d and root of %d is %d', index_i, root_i, index_j, root_j)
         if root_i == root_j:
-            return root_i, root_j
+            return root_i, root_j, None
         if self.rank[root_i] > self.rank[root_j]:
             self.parent[root_j] = root_i
+            parent = 0
         else:
             self.parent[root_i] = root_j
+            parent = 1
             if self.rank[root_i] == self.rank[root_j]:
                 self.rank[root_j] += 1
         logging.debug('Parents after union %s', self.parent)
         logging.debug('Ranks after union %s', self.rank)
-        return root_i, root_j
+        return root_i, root_j, parent
 
 
 class TableMerge:
@@ -51,30 +53,32 @@ class TableMerge:
     def __init__(self, row_counts):
         self.row_counts = row_counts
         self.set_tree = DisjointSetTree(len(row_counts))
+        self.max_row_count = max(self.row_counts)
 
     def merge(self, destination, source):
         src_idx, dest_idx = source - 1, destination - 1
         logging.debug('Candidate merge; destination table index %d source table index %d', dest_idx, src_idx)
-        dest_rows_idx, src_rows_idx = self.set_tree.union(src_idx, dest_idx)
-        merged_root_idx = self.set_tree.find(src_rows_idx)
-        logging.debug('Merged root index %d', merged_root_idx)
-        if merged_root_idx == src_rows_idx:
+        dest_rows_idx, src_rows_idx, parent_flag = self.set_tree.union(src_idx, dest_idx)
+        if parent_flag == 1:
+            merged_root_idx = src_rows_idx
             self.update_row_counts(src_rows_idx, dest_rows_idx)
-        else:
+        elif parent_flag == 0:
+            merged_root_idx = dest_rows_idx
             self.update_row_counts(dest_rows_idx, src_rows_idx)
+        else:
+            merged_root_idx = src_rows_idx
+        return merged_root_idx
 
     def update_row_counts(self, root_index, other_index):
         if root_index != other_index:
             self.row_counts[root_index] += self.row_counts[other_index]
             self.row_counts[other_index] = 0
 
-    def merge_fetch_max(self, merge_ops):
-        max_rows = []
-        for mo in merge_ops:
-            self.merge(*mo)
-            logging.debug('Row counts %s', self.row_counts)
-            max_rows.append(max(self.row_counts))
-        return max_rows
+    def merge_update_max(self, merge_op):
+        merged_root_idx = self.merge(*merge_op)
+        logging.debug('Merged root index %d', merged_root_idx)
+        if self.row_counts[merged_root_idx] > self.max_row_count:
+            self.max_row_count = self.row_counts[merged_root_idx]
 
 
 if __name__ == '__main__':
@@ -83,10 +87,10 @@ if __name__ == '__main__':
     row_counts = [int(jb) for jb in sys.stdin.readline().rstrip().split(" ")]
 
     tm = TableMerge(row_counts=row_counts)
-    input_lines = [sys.stdin.readline().rstrip() for _ in range(num_merges)]
 
-    for line in input_lines:
+    for _ in range(num_merges):
+        line = sys.stdin.readline().rstrip()
         merge_op = tuple(map(lambda x: int(x), line.split(" ")))
-        tm.merge(*merge_op)
-        print(max(tm.row_counts))
+        tm.merge_update_max(merge_op)
+        print(tm.max_row_count)
 
